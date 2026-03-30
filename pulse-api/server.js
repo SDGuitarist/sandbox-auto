@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const crypto = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
+const dns = require("dns").promises;
 
 // ---------------------------------------------------------------------------
 // Environment
@@ -47,6 +49,39 @@ app.use((req, res, next) => {
 });
 
 // ---------------------------------------------------------------------------
+// SSRF Protection — block private/reserved IP ranges
+// ---------------------------------------------------------------------------
+const BLOCKED_HOSTS = new Set([
+  "localhost", "metadata.google.internal", "metadata.aws.internal",
+]);
+
+function isPrivateIP(ip) {
+  const parts = ip.split(".").map(Number);
+  if (parts.length !== 4) return ip === "::1" || ip.startsWith("fc00:") || ip.startsWith("fe80:");
+  return (
+    parts[0] === 127 ||
+    parts[0] === 10 ||
+    (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) ||
+    (parts[0] === 192 && parts[1] === 168) ||
+    (parts[0] === 169 && parts[1] === 254) ||
+    parts[0] === 0
+  );
+}
+
+async function validateUrlForFetch(urlStr) {
+  let parsed;
+  try { parsed = new URL(urlStr); } catch { return "Invalid URL format"; }
+  if (!["http:", "https:"].includes(parsed.protocol)) return "URL must use http or https";
+  if (BLOCKED_HOSTS.has(parsed.hostname)) return "Blocked hostname";
+  if (urlStr.length > 2048) return "URL too long";
+  try {
+    const { address } = await dns.lookup(parsed.hostname);
+    if (isPrivateIP(address)) return "URL resolves to a private IP address";
+  } catch { return "Cannot resolve hostname"; }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // GET /health
 // ---------------------------------------------------------------------------
 app.get("/health", (_req, res) => {
@@ -65,7 +100,7 @@ app.get("/api/sites", async (_req, res) => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      console.error("Supabase error:", error); return res.status(500).json({ error: "Internal server error" });
     }
     return res.json({ sites: data });
   } catch (err) {
@@ -87,8 +122,12 @@ app.post("/api/sites", async (req, res) => {
     if (!url || typeof url !== "string" || url.trim().length === 0) {
       return res.status(400).json({ error: "url is required and must be a non-empty string" });
     }
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      return res.status(400).json({ error: "url must start with http:// or https://" });
+    if (name.trim().length > 100) {
+      return res.status(400).json({ error: "name must be 100 characters or less" });
+    }
+    const urlError = await validateUrlForFetch(url.trim());
+    if (urlError) {
+      return res.status(400).json({ error: urlError });
     }
 
     const { data, error } = await supabase
@@ -98,7 +137,7 @@ app.post("/api/sites", async (req, res) => {
       .single();
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      console.error("Supabase error:", error); return res.status(500).json({ error: "Internal server error" });
     }
     return res.status(201).json({ site: data });
   } catch (err) {
@@ -119,7 +158,7 @@ app.delete("/api/sites/:id", async (req, res) => {
       .eq("id", id);
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      console.error("Supabase error:", error); return res.status(500).json({ error: "Internal server error" });
     }
     return res.json({ success: true });
   } catch (err) {
@@ -145,7 +184,7 @@ app.get("/api/sites/:id/checks", async (req, res) => {
       .limit(limit);
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      console.error("Supabase error:", error); return res.status(500).json({ error: "Internal server error" });
     }
     return res.json({ checks: data });
   } catch (err) {
@@ -238,9 +277,14 @@ app.get("/api/stats", async (_req, res) => {
 // ---------------------------------------------------------------------------
 app.post("/api/cron/run", async (req, res) => {
   try {
-    // Auth check
-    const secret = req.headers["x-cron-secret"];
-    if (!CRON_SECRET || secret !== CRON_SECRET) {
+    // Auth check (timing-safe comparison)
+    const secret = req.headers["x-cron-secret"] || "";
+    if (!CRON_SECRET) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const expected = Buffer.from(CRON_SECRET);
+    const received = Buffer.from(secret);
+    if (expected.length !== received.length || !crypto.timingSafeEqual(expected, received)) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -262,6 +306,12 @@ app.post("/api/cron/run", async (req, res) => {
     const checkPromises = sites.map(async (site) => {
       const startTime = Date.now();
       try {
+        // SSRF check before fetching
+        const ssrfError = await validateUrlForFetch(site.url);
+        if (ssrfError) {
+          return { site_id: site.id, status_code: null, response_time_ms: 0, is_up: false, error: "Blocked: " + ssrfError };
+        }
+
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000);
 
@@ -291,18 +341,7 @@ app.post("/api/cron/run", async (req, res) => {
       }
     });
 
-    const settled = await Promise.allSettled(checkPromises);
-    const results = settled.map((s) =>
-      s.status === "fulfilled"
-        ? s.value
-        : {
-            site_id: null,
-            status_code: null,
-            response_time_ms: null,
-            is_up: false,
-            error: s.reason?.message || "Unknown error",
-          }
-    );
+    const results = await Promise.all(checkPromises);
 
     // Insert all results into checks table
     const { error: insertErr } = await supabase.from("checks").insert(results);

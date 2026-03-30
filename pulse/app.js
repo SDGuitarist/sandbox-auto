@@ -269,8 +269,8 @@ function renderSites(statsArr) {
       + '<div class="site-url">' + escapeHtml(site.url) + '</div>'
       + '</div>'
       + '<div class="site-metrics">'
-      + '<span><strong>' + site.uptime_pct.toFixed(1) + '%</strong> uptime</span>'
-      + '<span><strong>' + Math.round(site.avg_response_ms) + 'ms</strong> avg</span>'
+      + '<span><strong>' + escapeHtml(String(Number(site.uptime_pct).toFixed(1))) + '%</strong> uptime</span>'
+      + '<span><strong>' + escapeHtml(String(Math.round(Number(site.avg_response_ms)))) + 'ms</strong> avg</span>'
       + '</div>'
       + '<span class="site-last-checked">' + escapeHtml(lastChecked) + '</span>'
       + '<button class="delete-btn" data-site-id="' + escapeHtml(site.site_id) + '">Delete</button>'
@@ -380,7 +380,13 @@ function handleSiteListClick(e) {
   });
 }
 
-// ── Realtime Subscription ──────────────────────────────────────────
+// ── Realtime Subscription (debounced) ─────────────────────────────
+var reloadTimer = null;
+function debouncedLoadStats() {
+  if (reloadTimer) clearTimeout(reloadTimer);
+  reloadTimer = setTimeout(loadStats, 2000);
+}
+
 function subscribeRealtime() {
   supabaseClient
     .channel('checks-realtime')
@@ -389,10 +395,14 @@ function subscribeRealtime() {
       schema: 'public',
       table: 'checks',
     }, function () {
-      // New check came in — refresh dashboard
-      loadStats();
+      debouncedLoadStats();
     })
-    .subscribe();
+    .subscribe(function (status) {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        showError('Live updates disconnected — refreshing manually');
+        setInterval(loadStats, 60000);
+      }
+    });
 }
 
 // ── Init ───────────────────────────────────────────────────────────
