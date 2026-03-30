@@ -7,11 +7,17 @@
 const STORAGE_KEY = 'health-journal-entries';
 
 function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
 function getEntries() {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    if (!Array.isArray(data)) return [];
+    return data;
+  } catch {
+    return [];
+  }
 }
 
 function saveEntries(entries) {
@@ -152,13 +158,22 @@ function handleFormSubmit(e) {
 
   let data = {};
 
+  function showFieldError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    if (field) {
+      field.classList.add('error');
+      field.setAttribute('placeholder', message);
+      setTimeout(() => field.classList.remove('error'), 2000);
+    }
+  }
+
   switch (currentType) {
     case 'symptom':
       data = {
         name: document.getElementById('symptom-name').value.trim(),
         severity: parseInt(document.getElementById('symptom-severity').value, 10)
       };
-      if (!data.name) return;
+      if (!data.name) { showFieldError('symptom-name', 'Please enter a symptom name'); return; }
       break;
 
     case 'medication':
@@ -166,7 +181,7 @@ function handleFormSubmit(e) {
         name: document.getElementById('med-name').value.trim(),
         dosage: document.getElementById('med-dosage').value.trim()
       };
-      if (!data.name) return;
+      if (!data.name) { showFieldError('med-name', 'Please enter a medication name'); return; }
       break;
 
     case 'vitals':
@@ -186,7 +201,7 @@ function handleFormSubmit(e) {
         mood: activeMood ? parseInt(activeMood.getAttribute('data-mood'), 10) : null,
         energy: activeEnergy ? parseInt(activeEnergy.getAttribute('data-energy'), 10) : null
       };
-      if (!data.mood) return;
+      if (!data.mood) { alert('Please select a mood'); return; }
       break;
     }
 
@@ -195,7 +210,7 @@ function handleFormSubmit(e) {
         title: document.getElementById('note-title').value.trim(),
         body: document.getElementById('note-body').value.trim()
       };
-      if (!data.title) return;
+      if (!data.title) { showFieldError('note-title', 'Please enter a title'); return; }
       break;
   }
 
@@ -206,9 +221,13 @@ function handleFormSubmit(e) {
   document.getElementById('entry-form').reset();
   setDefaultDate();
 
-  // Reset pickers
+  // Reset pickers to defaults (mood=3, energy=3)
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.energy-btn').forEach(b => b.classList.remove('active'));
+  const defaultMood = document.querySelector('.mood-btn[data-mood="3"]');
+  const defaultEnergy = document.querySelector('.energy-btn[data-energy="3"]');
+  if (defaultMood) defaultMood.classList.add('active');
+  if (defaultEnergy) defaultEnergy.classList.add('active');
 
   // Reset severity display
   const severityValue = document.getElementById('severity-value');
@@ -309,7 +328,7 @@ function getEntryDetails(entry) {
     html += '<p class="entry-note"><em>' + escapeHtml(entry.notes) + '</em></p>';
   }
 
-  html += '<button class="delete-btn" onclick="handleDelete(\'' + entry.id + '\')">Delete</button>';
+  html += '<button class="delete-btn" data-delete-id="' + escapeHtml(entry.id) + '">Delete</button>';
   html += '</div>';
   return html;
 }
@@ -332,9 +351,10 @@ function applyFilters(entries) {
     // Type filter
     if (filterType && filterType !== 'all' && entry.type !== filterType) return false;
 
-    // Date range
-    if (filterFrom && entry.date < filterFrom) return false;
-    if (filterTo && entry.date > filterTo + 'T23:59:59') return false;
+    // Date range (compare as Date objects for reliability)
+    const entryDate = new Date(entry.date);
+    if (filterFrom && entryDate < new Date(filterFrom)) return false;
+    if (filterTo && entryDate > new Date(filterTo + 'T23:59:59')) return false;
 
     // Search text - match against all text fields
     if (filterSearch) {
@@ -370,7 +390,7 @@ function renderLog() {
     const details = getEntryDetails(entry);
 
     return '<div class="log-entry type-' + escapeHtml(entry.type) + '" data-id="' + escapeHtml(entry.id) + '">' +
-      '<div class="entry-header" onclick="toggleEntry(\'' + entry.id + '\')">' +
+      '<div class="entry-header">' +
         '<span class="entry-icon">' + icon + '</span>' +
         '<span class="entry-summary">' + summary + '</span>' +
         '<span class="entry-date">' + escapeHtml(date) + '</span>' +
@@ -380,17 +400,6 @@ function renderLog() {
   }).join('');
 }
 
-function toggleEntry(id) {
-  const el = document.querySelector('.log-entry[data-id="' + id + '"]');
-  if (el) el.classList.toggle('expanded');
-}
-
-function handleDelete(id) {
-  if (!confirm('Delete this entry?')) return;
-  deleteEntry(id);
-  renderLog();
-}
-
 function setupLogFilters() {
   const ids = ['filter-type', 'filter-from', 'filter-to', 'filter-search'];
   ids.forEach(id => {
@@ -398,6 +407,31 @@ function setupLogFilters() {
     if (el) {
       el.addEventListener('input', renderLog);
       el.addEventListener('change', renderLog);
+    }
+  });
+}
+
+function setupLogEventDelegation() {
+  const list = document.getElementById('entries-list');
+  if (!list) return;
+
+  list.addEventListener('click', (e) => {
+    // Handle expand/collapse via entry header
+    const header = e.target.closest('.entry-header');
+    if (header) {
+      const entry = header.closest('.log-entry');
+      if (entry) entry.classList.toggle('expanded');
+      return;
+    }
+
+    // Handle delete via data attribute
+    const deleteBtn = e.target.closest('.delete-btn[data-delete-id]');
+    if (deleteBtn) {
+      const id = deleteBtn.getAttribute('data-delete-id');
+      if (confirm('Delete this entry?')) {
+        deleteEntry(id);
+        renderLog();
+      }
     }
   });
 }
@@ -633,7 +667,12 @@ function exportCSV() {
   });
 
   const csvContent = rows.map(row =>
-    row.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(',')
+    row.map(cell => {
+      let str = String(cell).replace(/"/g, '""');
+      // Prevent formula injection in spreadsheet apps
+      if (/^[=+\-@\t\r]/.test(str)) str = "'" + str;
+      return '"' + str + '"';
+    }).join(',')
   ).join('\n');
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -671,16 +710,13 @@ function getPlainSummary(entry) {
   }
 }
 
-// --- Make onclick-referenced functions global ---
-window.toggleEntry = toggleEntry;
-window.handleDelete = handleDelete;
-
 // --- Initialize on DOM ready ---
 
 document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
   setupEntryForm();
   setupLogFilters();
+  setupLogEventDelegation();
   setupExport();
 
   // Set default date and show dashboard

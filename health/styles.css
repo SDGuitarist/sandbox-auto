@@ -38,6 +38,17 @@ body {
   display: none;
 }
 
+.error {
+  border-color: var(--symptom) !important;
+  animation: shake 0.3s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
 .view {
   display: none;
 }
@@ -101,7 +112,7 @@ header h1 {
 }
 
 /* ===== 2. Dashboard ===== */
-.dashboard {
+#dashboard {
   padding: 1.25rem;
 }
 
@@ -161,10 +172,14 @@ header h1 {
 }
 
 /* ===== 3. Add Entry Form ===== */
-.entry-form {
+#add-entry {
   padding: 1.25rem;
   max-width: 600px;
   margin: 0 auto;
+}
+
+#add-entry h2 {
+  margin-bottom: 1rem;
 }
 
 /* Type Selector Pills */
@@ -371,7 +386,7 @@ header h1 {
 }
 
 /* ===== 4. Entry Log ===== */
-.entry-log {
+#log {
   padding: 1.25rem;
 }
 
@@ -380,7 +395,7 @@ header h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem 1.25rem 0;
+  margin-bottom: 1rem;
 }
 
 .log-header h2 {

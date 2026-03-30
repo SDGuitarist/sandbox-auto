@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Health Journal</title>
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+          integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
+          crossorigin="anonymous"></script>
 </head>
 <body>
   <!-- Header -->
@@ -192,7 +195,7 @@
       <input type="text" id="filter-search" placeholder="Search...">
     </div>
     <div id="entries-list" class="entries-list">
-      <p class="empty">No entries yet. Start tracking your health!</p>
+      <p class="empty-state">No entries yet. Start tracking your health!</p>
     </div>
   </div>
 
