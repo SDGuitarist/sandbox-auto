@@ -15,9 +15,9 @@ var supabaseClient = window.supabase.createClient(
 
 // ── HTML Escaping ──────────────────────────────────────────────────
 function escapeHtml(str) {
-  if (!str) return '';
+  if (str == null) return '';
   var div = document.createElement('div');
-  div.textContent = str;
+  div.textContent = String(str);
   return div.innerHTML;
 }
 
@@ -196,6 +196,8 @@ function debouncedReload() {
   }, 2000);
 }
 
+var fallbackInterval = null;
+
 function subscribeRealtime() {
   supabaseClient
     .channel('status-page')
@@ -205,9 +207,21 @@ function subscribeRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'status_updates' }, function() {
       debouncedReload();
     })
-    .subscribe();
+    .subscribe(function(status) {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn('Realtime disconnected, falling back to polling');
+        if (!fallbackInterval) {
+          fallbackInterval = setInterval(loadStatus, 60000);
+        }
+      }
+    });
 }
 
 // ── Init ───────────────────────────────────────────────────────────
 loadStatus();
-subscribeRealtime();
+try {
+  subscribeRealtime();
+} catch (e) {
+  console.warn('Realtime unavailable, polling every 60s', e);
+  fallbackInterval = setInterval(loadStatus, 60000);
+}

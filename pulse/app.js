@@ -16,8 +16,9 @@ const supabaseClient = window.supabase.createClient(
 
 // ── HTML Escaping ──────────────────────────────────────────────────
 function escapeHtml(str) {
+  if (str == null) return '';
   const div = document.createElement('div');
-  div.textContent = str;
+  div.textContent = String(str);
   return div.innerHTML;
 }
 
@@ -410,7 +411,9 @@ function subscribeRealtime() {
     .subscribe(function (status) {
       if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         showError('Live updates disconnected — refreshing manually');
-        setInterval(loadStats, 60000);
+        if (!window._pulseFallbackInterval) {
+          window._pulseFallbackInterval = setInterval(function() { loadStats(); loadIncidents(); }, 60000);
+        }
       }
     });
 }

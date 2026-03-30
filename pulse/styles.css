@@ -457,7 +457,8 @@ header .subtitle {
     grid-template-columns: 1fr;
   }
 
-  .site-card {
+  .site-card,
+  .incident-card {
     flex-wrap: wrap;
   }
 

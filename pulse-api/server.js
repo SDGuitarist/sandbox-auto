@@ -438,6 +438,15 @@ app.get("/api/incidents/:id", async (req, res) => {
 // ---------------------------------------------------------------------------
 app.post("/api/incidents/:id/resolve", async (req, res) => {
   try {
+    // Auth check (same as cron endpoints)
+    const secret = req.headers["x-cron-secret"] || "";
+    if (!CRON_SECRET) return res.status(401).json({ error: "Unauthorized" });
+    const expected = Buffer.from(CRON_SECRET);
+    const received = Buffer.from(secret);
+    if (expected.length !== received.length || !crypto.timingSafeEqual(expected, received)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const incident = await incidentManager.resolveIncident(req.params.id);
     if (!incident) return res.status(404).json({ error: "Incident not found" });
     if (notificationService) {
