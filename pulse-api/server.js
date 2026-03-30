@@ -3,6 +3,8 @@ const cors = require("cors");
 const crypto = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
 const dns = require("dns").promises;
+const createIncidentManager = require("./incidents");
+const createNotificationService = require("./notifications");
 
 // ---------------------------------------------------------------------------
 // Environment
@@ -24,6 +26,12 @@ const supabase =
   SUPABASE_URL && SUPABASE_SERVICE_KEY
     ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
     : null;
+
+// ---------------------------------------------------------------------------
+// Incident & Notification services
+// ---------------------------------------------------------------------------
+const incidentManager = supabase ? createIncidentManager(supabase) : null;
+const notificationService = supabase ? createNotificationService(supabase) : null;
 
 // ---------------------------------------------------------------------------
 // Express app
@@ -347,12 +355,116 @@ app.post("/api/cron/run", async (req, res) => {
     const { error: insertErr } = await supabase.from("checks").insert(results);
 
     if (insertErr) {
-      return res.status(500).json({ error: insertErr.message });
+      console.error("Supabase error:", insertErr);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+
+    // Process results through incident pipeline
+    if (incidentManager && notificationService) {
+      try {
+        const events = await incidentManager.processResults(results);
+        for (const event of events) {
+          await notificationService.sendNotification(event);
+        }
+      } catch (pipelineErr) {
+        console.error("Incident pipeline error:", pipelineErr);
+        // Don't fail the cron response — checks were saved successfully
+      }
     }
 
     return res.json({ results, checked_at: new Date().toISOString() });
   } catch (err) {
     return res.status(500).json({ error: "Failed to run checks" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/incidents/process — process check results through incident pipeline
+// ---------------------------------------------------------------------------
+app.post("/api/incidents/process", async (req, res) => {
+  try {
+    const secret = req.headers["x-cron-secret"] || "";
+    if (!CRON_SECRET) return res.status(401).json({ error: "Unauthorized" });
+    const expected = Buffer.from(CRON_SECRET);
+    const received = Buffer.from(secret);
+    if (expected.length !== received.length || !crypto.timingSafeEqual(expected, received)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { results } = req.body;
+    if (!Array.isArray(results)) return res.status(400).json({ error: "results must be an array" });
+
+    const events = await incidentManager.processResults(results);
+    for (const event of events) {
+      await notificationService.sendNotification(event);
+    }
+    return res.json({ incidents: events });
+  } catch (err) {
+    console.error("Incident process error:", err);
+    return res.status(500).json({ error: "Failed to process incidents" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/incidents — list incidents
+// ---------------------------------------------------------------------------
+app.get("/api/incidents", async (req, res) => {
+  try {
+    const statusFilter = req.query.status || null;
+    const incidents = await incidentManager.getIncidents(statusFilter);
+    return res.json({ incidents });
+  } catch (err) {
+    console.error("Get incidents error:", err);
+    return res.status(500).json({ error: "Failed to fetch incidents" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/incidents/:id — single incident with updates and notifications
+// ---------------------------------------------------------------------------
+app.get("/api/incidents/:id", async (req, res) => {
+  try {
+    const result = await incidentManager.getIncidentById(req.params.id);
+    if (!result || !result.incident) return res.status(404).json({ error: "Incident not found" });
+    return res.json(result);
+  } catch (err) {
+    console.error("Get incident error:", err);
+    return res.status(500).json({ error: "Failed to fetch incident" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/incidents/:id/resolve — manually resolve an incident
+// ---------------------------------------------------------------------------
+app.post("/api/incidents/:id/resolve", async (req, res) => {
+  try {
+    const incident = await incidentManager.resolveIncident(req.params.id);
+    if (!incident) return res.status(404).json({ error: "Incident not found" });
+    if (notificationService) {
+      await notificationService.sendNotification({
+        action: "resolved",
+        incident,
+        site_name: incident.site_name || "Unknown",
+        site_url: incident.site_url || "",
+      });
+    }
+    return res.json({ incident });
+  } catch (err) {
+    console.error("Resolve incident error:", err);
+    return res.status(500).json({ error: "Failed to resolve incident" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/status — public status summary
+// ---------------------------------------------------------------------------
+app.get("/api/status", async (_req, res) => {
+  try {
+    const sites = await incidentManager.getStatusSummary();
+    return res.json({ sites });
+  } catch (err) {
+    console.error("Status summary error:", err);
+    return res.status(500).json({ error: "Failed to fetch status" });
   }
 });
 

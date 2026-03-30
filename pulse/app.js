@@ -382,9 +382,12 @@ function handleSiteListClick(e) {
 
 // ── Realtime Subscription (debounced) ─────────────────────────────
 var reloadTimer = null;
-function debouncedLoadStats() {
+function debouncedReload() {
   if (reloadTimer) clearTimeout(reloadTimer);
-  reloadTimer = setTimeout(loadStats, 2000);
+  reloadTimer = setTimeout(function () {
+    loadStats();
+    loadIncidents();
+  }, 2000);
 }
 
 function subscribeRealtime() {
@@ -395,7 +398,14 @@ function subscribeRealtime() {
       schema: 'public',
       table: 'checks',
     }, function () {
-      debouncedLoadStats();
+      debouncedReload();
+    })
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'incidents',
+    }, function () {
+      debouncedReload();
     })
     .subscribe(function (status) {
       if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
@@ -405,10 +415,102 @@ function subscribeRealtime() {
     });
 }
 
+// ── Format Duration ───────────────────────────────────────────
+function formatDuration(ms) {
+  if (ms == null) return '—';
+  var sec = Math.floor(ms / 1000);
+  if (sec < 60) return sec + 's';
+  var min = Math.floor(sec / 60);
+  if (min < 60) return min + 'm';
+  var hr = Math.floor(min / 60);
+  var remMin = min % 60;
+  return hr + 'h ' + remMin + 'm';
+}
+
+// ── Load Incidents ────────────────────────────────────────────
+async function loadIncidents() {
+  var data = await api('/api/incidents');
+  if (!data || !data.incidents) return;
+
+  var incidents = data.incidents;
+  var active = [];
+  var resolved = [];
+
+  incidents.forEach(function (inc) {
+    if (inc.status !== 'resolved') {
+      active.push(inc);
+    } else {
+      resolved.push(inc);
+    }
+  });
+
+  // Update open incidents stat
+  document.getElementById('open-incidents-stat').textContent = active.length;
+
+  // Calculate MTTR from resolved incidents that have duration_ms
+  var resolvedWithDuration = resolved.filter(function (inc) {
+    return inc.duration_ms != null;
+  });
+  if (resolvedWithDuration.length > 0) {
+    var totalMs = resolvedWithDuration.reduce(function (sum, inc) {
+      return sum + inc.duration_ms;
+    }, 0);
+    var avgMs = Math.round(totalMs / resolvedWithDuration.length);
+    document.getElementById('mttr-stat').textContent = formatDuration(avgMs);
+  } else {
+    document.getElementById('mttr-stat').textContent = '—';
+  }
+
+  // Render active incidents
+  var activeContainer = document.getElementById('active-incidents');
+  if (active.length === 0) {
+    activeContainer.innerHTML = '<div class="empty-state">No active incidents</div>';
+  } else {
+    var html = '';
+    active.forEach(function (inc) {
+      var siteName = inc.site_name || 'Unknown site';
+      var durationSinceStart = Date.now() - new Date(inc.started_at).getTime();
+      html += '<div class="incident-card ' + escapeHtml(inc.severity) + '" data-incident-id="' + escapeHtml(inc.id) + '">'
+        + '<span class="severity-badge severity-' + escapeHtml(inc.severity) + '">' + escapeHtml(inc.severity.toUpperCase()) + '</span>'
+        + '<div class="incident-info">'
+        + '<div class="incident-site">' + escapeHtml(siteName) + '</div>'
+        + '<div class="incident-detail">Duration: ' + escapeHtml(formatDuration(durationSinceStart))
+        + ' &middot; Failures: ' + escapeHtml(String(inc.consecutive_failures)) + '</div>'
+        + '</div>'
+        + '</div>';
+    });
+    activeContainer.innerHTML = html;
+  }
+
+  // Render resolved incidents (most recent first, limit 10)
+  var timelineContainer = document.getElementById('incident-timeline');
+  var recentResolved = resolved
+    .sort(function (a, b) { return new Date(b.resolved_at) - new Date(a.resolved_at); })
+    .slice(0, 10);
+
+  if (recentResolved.length === 0) {
+    timelineContainer.innerHTML = '<div class="empty-state">No resolved incidents yet</div>';
+  } else {
+    var html = '';
+    recentResolved.forEach(function (inc) {
+      var siteName = inc.site_name || 'Unknown site';
+      html += '<div class="incident-card resolved" data-incident-id="' + escapeHtml(inc.id) + '">'
+        + '<div class="incident-info">'
+        + '<div class="incident-site">' + escapeHtml(siteName) + '</div>'
+        + '<div class="incident-detail">Duration: ' + escapeHtml(formatDuration(inc.duration_ms))
+        + ' &middot; Resolved: ' + escapeHtml(timeAgo(inc.resolved_at)) + '</div>'
+        + '</div>'
+        + '</div>';
+    });
+    timelineContainer.innerHTML = html;
+  }
+}
+
 // ── Init ───────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
   // Load initial data
   loadStats();
+  loadIncidents();
 
   // Form submit handler
   document.getElementById('add-site-form').addEventListener('submit', handleAddSite);

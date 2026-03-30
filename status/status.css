@@ -1,0 +1,298 @@
+/* Uptime Pulse — Public Status Page — Dark theme */
+
+:root {
+  --bg: #1a1a2e;
+  --card: #16213e;
+  --border: #333;
+  --text: #e0e0e0;
+  --accent: #c9a96e;
+  --accent-light: #e8d5b7;
+  --operational: #2ecc71;
+  --degraded: #f39c12;
+  --outage: #e74c3c;
+  --radius: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ── Header Banner ──────────────────────────────────────────────── */
+
+.status-header {
+  border-radius: var(--radius);
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.status-operational {
+  background: var(--operational);
+  color: #1a1a2e;
+}
+
+.status-degraded {
+  background: var(--degraded);
+  color: #1a1a2e;
+}
+
+.status-down {
+  background: var(--outage);
+  color: #fff;
+}
+
+/* ── Page Title ─────────────────────────────────────────────────── */
+
+h1 {
+  font-size: 1.75rem;
+  color: var(--accent);
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Section Headings ───────────────────────────────────────────── */
+
+h2 {
+  font-size: 1.1rem;
+  color: var(--accent-light);
+  margin-bottom: 0.75rem;
+  margin-top: 2rem;
+}
+
+/* ── Site Status Rows ───────────────────────────────────────────── */
+
+.site-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+  transition: border-color 0.2s ease;
+}
+
+.site-status-row:hover {
+  border-color: var(--accent);
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.site-status-row.operational .status-dot {
+  background: var(--operational);
+  box-shadow: 0 0 6px var(--operational);
+}
+
+.site-status-row.degraded .status-dot {
+  background: var(--degraded);
+  box-shadow: 0 0 6px var(--degraded);
+}
+
+.site-status-row.down .status-dot {
+  background: var(--outage);
+  box-shadow: 0 0 6px var(--outage);
+}
+
+.site-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.site-status-text {
+  font-size: 0.85rem;
+  text-transform: capitalize;
+  color: #aaa;
+}
+
+.site-status-row.operational .site-status-text {
+  color: var(--operational);
+}
+
+.site-status-row.degraded .site-status-text {
+  color: var(--degraded);
+}
+
+.site-status-row.down .site-status-text {
+  color: var(--outage);
+}
+
+/* ── Incident Cards ─────────────────────────────────────────────── */
+
+.incident-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.incident-card.minor {
+  border-left-color: #3498db;
+}
+
+.incident-card.major {
+  border-left-color: var(--degraded);
+}
+
+.incident-card.critical {
+  border-left-color: var(--outage);
+}
+
+.incident-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.incident-card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.incident-card-severity {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #aaa;
+}
+
+.incident-card.minor .incident-card-severity {
+  color: #3498db;
+}
+
+.incident-card.major .incident-card-severity {
+  color: var(--degraded);
+}
+
+.incident-card.critical .incident-card-severity {
+  color: var(--outage);
+}
+
+.incident-card-meta {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Incident Timeline ──────────────────────────────────────────── */
+
+.incident-timeline {
+  padding-left: 1rem;
+  border-left: 2px solid var(--border);
+  margin-top: 0.5rem;
+}
+
+.timeline-entry {
+  position: relative;
+  padding: 0.4rem 0 0.4rem 1rem;
+  font-size: 0.85rem;
+  color: #bbb;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -1.35rem;
+  top: 0.55rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+}
+
+.timeline-entry .timeline-time {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.15rem;
+}
+
+/* ── Empty State ────────────────────────────────────────────────── */
+
+.empty-state {
+  text-align: center;
+  color: #666;
+  padding: 2rem 1rem;
+  font-size: 0.9rem;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────── */
+
+footer {
+  margin-top: 3rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  body {
+    padding: 1rem;
+  }
+
+  .status-header {
+    padding: 1rem;
+    font-size: 1.1rem;
+  }
+
+  h1 {
+    font-size: 1.35rem;
+  }
+
+  .site-status-row {
+    padding: 0.65rem 0.75rem;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .incident-card {
+    padding: 0.75rem 1rem;
+  }
+
+  .incident-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}

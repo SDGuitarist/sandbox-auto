@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uptime Pulse — Status</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.railway.app; img-src 'self' data:;">
+  <link rel="stylesheet" href="status.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <h1>Uptime Pulse</h1>
+  <p class="subtitle">System Status</p>
+
+  <!-- Overall status banner -->
+  <div id="overall-status" class="status-header status-operational">
+    Loading status...
+  </div>
+
+  <!-- Site status rows -->
+  <h2>Services</h2>
+  <div id="sites-status-list">
+    <p class="empty-state">Loading sites...</p>
+  </div>
+
+  <!-- Active incidents -->
+  <h2>Active Incidents</h2>
+  <div id="incidents-list">
+    <p class="empty-state">Loading incidents...</p>
+  </div>
+
+  <!-- Resolved incidents -->
+  <h2>Recent Incident History</h2>
+  <div id="incident-history">
+    <p class="empty-state">Loading history...</p>
+  </div>
+
+  <footer>
+    Powered by <a href="../pulse/">Uptime Pulse</a>
+  </footer>
+
+  <script src="status.js"></script>
+</body>
+</html>

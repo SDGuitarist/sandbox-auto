@@ -321,6 +321,112 @@ header .subtitle {
   to { transform: rotate(360deg); }
 }
 
+/* Incidents Section */
+#incidents-section {
+  padding: 1rem 0;
+  margin-top: 1rem;
+}
+
+#incidents-section h2 {
+  font-size: 1.3rem;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+#incidents-section h3 {
+  font-size: 1rem;
+  color: #aaa;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.incidents-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.incidents-stats .stat-card {
+  flex: 0 1 200px;
+}
+
+.incidents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Incident Card */
+.incident-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-left: 4px solid #666;
+}
+
+.incident-card.minor {
+  border-left-color: #3498db;
+}
+
+.incident-card.major {
+  border-left-color: var(--warning);
+}
+
+.incident-card.critical {
+  border-left-color: var(--down);
+}
+
+.incident-card.resolved {
+  border-left-color: var(--up);
+  opacity: 0.75;
+}
+
+.incident-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.incident-site {
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.incident-detail {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* Severity Badges */
+.severity-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.severity-minor {
+  background: rgba(52, 152, 219, 0.15);
+  color: #3498db;
+}
+
+.severity-major {
+  background: rgba(243, 156, 18, 0.15);
+  color: var(--warning);
+}
+
+.severity-critical {
+  background: rgba(231, 76, 60, 0.15);
+  color: var(--down);
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   body {
@@ -358,5 +464,13 @@ header .subtitle {
   .site-card .site-metrics {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .incidents-stats {
+    flex-direction: column;
+  }
+
+  .incidents-stats .stat-card {
+    flex: 1;
   }
 }
