@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uptime Pulse</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.railway.app; img-src 'self' data:;">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Uptime Pulse</h1>
+    <p class="subtitle">Real-time site monitoring dashboard</p>
+  </header>
+
+  <!-- Stat cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <span id="total-sites" class="stat-value">0</span>
+      <span class="stat-label">Total Sites</span>
+    </div>
+    <div class="stat-card">
+      <span id="sites-up" class="stat-value">0</span>
+      <span class="stat-label">Sites Up</span>
+    </div>
+    <div class="stat-card">
+      <span id="avg-uptime" class="stat-value">0%</span>
+      <span class="stat-label">Avg Uptime</span>
+    </div>
+    <div class="stat-card">
+      <span id="avg-response" class="stat-value">0ms</span>
+      <span class="stat-label">Avg Response</span>
+    </div>
+  </div>
+
+  <!-- Add site form -->
+  <form id="add-site-form" class="add-site-form">
+    <input type="text" id="site-name" placeholder="Site name" required>
+    <input type="url" id="site-url" placeholder="https://example.com" required>
+    <button type="submit">Add Site</button>
+  </form>
+
+  <!-- Site list -->
+  <div id="sites-list" class="site-list">
+    <div class="empty-state">No sites monitored yet. Add one above!</div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-container">
+      <h3>Response Times (last 24h)</h3>
+      <canvas id="response-chart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h3>Uptime History</h3>
+      <canvas id="uptime-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Error toast -->
+  <div id="error-toast" class="error-toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

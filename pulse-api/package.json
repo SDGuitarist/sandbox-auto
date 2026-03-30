@@ -1,0 +1,12 @@
+{
+  "name": "uptime-pulse-api",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "cors": "^2.8.5",
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}
