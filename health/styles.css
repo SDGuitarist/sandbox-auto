@@ -1,0 +1,605 @@
+/* ===== Health Journal App Styles ===== */
+
+/* --- CSS Variables --- */
+:root {
+  --bg: #1a1a2e;
+  --card: #16213e;
+  --border: #333;
+  --text: #e0e0e0;
+  --accent: #c9a96e;
+  --accent-light: #e8d5b7;
+  --radius: 8px;
+  --symptom: #e74c3c;
+  --medication: #3498db;
+  --vitals: #2ecc71;
+  --mood: #f39c12;
+  --note: #9b59b6;
+}
+
+/* --- Reset & Base --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* --- Utilities --- */
+.hidden {
+  display: none;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+/* ===== Header ===== */
+header {
+  text-align: center;
+  padding: 1.5rem 1rem 1rem;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+
+header h1 {
+  font-size: 2rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  color: #888;
+  font-size: 0.95rem;
+}
+
+/* ===== 1. Navigation Bar ===== */
+.nav {
+  display: flex;
+  gap: 0;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav button {
+  flex: 1;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text);
+  padding: 1rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.nav button:hover {
+  color: var(--accent-light);
+}
+
+.nav button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* ===== 2. Dashboard ===== */
+.dashboard {
+  padding: 1.25rem;
+}
+
+/* Summary Cards Row */
+.summary-cards {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-card {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-align: center;
+}
+
+.summary-card .card-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+}
+
+.summary-card .card-label {
+  font-size: 0.8rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Chart Containers */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.chart-container {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.chart-container h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  color: var(--accent-light);
+}
+
+.chart-container canvas {
+  width: 100%;
+  max-height: 250px;
+}
+
+/* ===== 3. Add Entry Form ===== */
+.entry-form {
+  padding: 1.25rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Type Selector Pills */
+.type-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.type-selector button {
+  flex: 1;
+  min-width: 80px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.type-selector button:hover {
+  border-color: var(--accent);
+}
+
+.type-selector button.active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  color: #bbb;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Severity Slider */
+.severity-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  outline: none;
+}
+
+.severity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.severity-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.severity-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+}
+
+/* Mood Picker */
+.mood-picker {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.mood-picker button {
+  font-size: 1.75rem;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mood-picker button:hover {
+  border-color: var(--accent);
+}
+
+.mood-picker button.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.35);
+}
+
+/* Tags Input */
+.tags-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  min-height: 44px;
+  align-items: center;
+}
+
+.tags-input input {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 80px;
+  padding: 0.25rem;
+  outline: none;
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(201, 169, 110, 0.2);
+  color: var(--accent-light);
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+.tag-pill .remove-tag {
+  cursor: pointer;
+  font-size: 0.7rem;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.tag-pill .remove-tag:hover {
+  opacity: 1;
+}
+
+/* Save Button */
+.save-btn {
+  width: 100%;
+  padding: 0.85rem;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 0.5rem;
+}
+
+.save-btn:hover {
+  background: var(--accent-light);
+}
+
+/* ===== 4. Entry Log ===== */
+.entry-log {
+  padding: 1.25rem;
+}
+
+/* Log Header */
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.25rem 0;
+}
+
+.log-header h2 {
+  margin: 0;
+}
+
+.export-btn {
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.export-btn:hover {
+  background: var(--accent-light);
+}
+
+.empty-state {
+  text-align: center;
+  color: #555;
+  padding: 3rem;
+  font-style: italic;
+}
+
+/* BP Inputs */
+.bp-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bp-inputs input {
+  flex: 1;
+}
+
+.bp-inputs span {
+  color: #888;
+  font-size: 1.2rem;
+}
+
+/* Filter Bar */
+.filters {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.filters select,
+.filters input {
+  padding: 0.6rem 0.75rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 120px;
+}
+
+.filters select:focus,
+.filters input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Entry Cards */
+.log-entry {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  transition: border-color 0.2s;
+}
+
+.log-entry.type-symptom {
+  border-left-color: var(--symptom);
+}
+
+.log-entry.type-medication {
+  border-left-color: var(--medication);
+}
+
+.log-entry.type-vitals {
+  border-left-color: var(--vitals);
+}
+
+.log-entry.type-mood {
+  border-left-color: var(--mood);
+}
+
+.log-entry.type-note {
+  border-left-color: var(--note);
+}
+
+/* Entry Header */
+.entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.entry-header .entry-icon {
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.entry-header .entry-summary {
+  flex: 1;
+  font-weight: 500;
+}
+
+.entry-header .entry-date {
+  font-size: 0.8rem;
+  color: #999;
+  white-space: nowrap;
+  margin-left: 1rem;
+}
+
+/* Expandable Details */
+.entry-details {
+  display: none;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.log-entry.expanded .entry-details {
+  display: block;
+}
+
+/* Tags in log entries */
+.entry-tags {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.entry-tags .tag-pill {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+}
+
+/* Delete Button */
+.delete-btn {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: #777;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  margin-top: 0.5rem;
+}
+
+.delete-btn:hover {
+  color: var(--symptom);
+  border-color: var(--symptom);
+}
+
+/* ===== 5. General Buttons & Inputs ===== */
+button {
+  font-family: inherit;
+}
+
+/* ===== Responsive (Mobile) ===== */
+@media (max-width: 600px) {
+  .summary-cards {
+    flex-wrap: wrap;
+  }
+
+  .summary-card {
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .type-selector button {
+    flex: 1 1 calc(33% - 0.35rem);
+    min-width: 0;
+    font-size: 0.8rem;
+    padding: 0.5rem;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .filters select,
+  .filters input {
+    min-width: 100%;
+  }
+
+  .entry-header {
+    flex-wrap: wrap;
+  }
+
+  .entry-header .entry-date {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.25rem;
+  }
+
+  .save-btn {
+    position: sticky;
+    bottom: 1rem;
+  }
+}

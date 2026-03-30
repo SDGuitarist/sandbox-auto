@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health Journal</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <h1>Health Journal</h1>
+    <p class="subtitle">Track your daily health</p>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+    <button class="nav-btn" data-view="add-entry">Add Entry</button>
+    <button class="nav-btn" data-view="log">Log</button>
+  </nav>
+
+  <!-- Dashboard View -->
+  <div id="dashboard" class="view active">
+    <div class="summary-cards">
+      <div class="summary-card">
+        <span class="card-number" id="total-entries">0</span>
+        <span class="card-label">Total Entries</span>
+      </div>
+      <div class="summary-card">
+        <span class="card-number" id="week-entries">0</span>
+        <span class="card-label">This Week</span>
+      </div>
+      <div class="summary-card">
+        <span class="card-number" id="top-symptom">—</span>
+        <span class="card-label">Top Symptom</span>
+      </div>
+      <div class="summary-card">
+        <span class="card-number" id="avg-mood">—</span>
+        <span class="card-label">Avg Mood</span>
+      </div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-container">
+        <h3>Mood Trend (30 days)</h3>
+        <canvas id="mood-chart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>Weight Trend (30 days)</h3>
+        <canvas id="weight-chart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>Blood Pressure (30 days)</h3>
+        <canvas id="bp-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Entry View -->
+  <div id="add-entry" class="view">
+    <h2>New Entry</h2>
+    <div class="type-selector">
+      <button class="type-btn active" data-type="symptom">🤒 Symptom</button>
+      <button class="type-btn" data-type="medication">💊 Medication</button>
+      <button class="type-btn" data-type="vitals">❤️ Vitals</button>
+      <button class="type-btn" data-type="mood">😊 Mood</button>
+      <button class="type-btn" data-type="note">📝 Note</button>
+    </div>
+
+    <form id="entry-form" class="entry-form">
+      <div class="form-group">
+        <label for="entry-date">Date & Time</label>
+        <input type="datetime-local" id="entry-date" required>
+      </div>
+
+      <!-- Symptom fields -->
+      <div id="symptom-fields" class="type-fields">
+        <div class="form-group">
+          <label for="symptom-name">Symptom</label>
+          <input type="text" id="symptom-name" placeholder="e.g., Headache, Nausea">
+        </div>
+        <div class="form-group">
+          <label for="symptom-severity">Severity: <span id="severity-value">5</span>/10</label>
+          <input type="range" id="symptom-severity" class="severity-slider" min="1" max="10" value="5">
+        </div>
+      </div>
+
+      <!-- Medication fields -->
+      <div id="medication-fields" class="type-fields hidden">
+        <div class="form-group">
+          <label for="med-name">Medication</label>
+          <input type="text" id="med-name" placeholder="e.g., Ibuprofen">
+        </div>
+        <div class="form-group">
+          <label for="med-dosage">Dosage</label>
+          <input type="text" id="med-dosage" placeholder="e.g., 200mg">
+        </div>
+      </div>
+
+      <!-- Vitals fields -->
+      <div id="vitals-fields" class="type-fields hidden">
+        <div class="form-group">
+          <label for="bp-systolic">Blood Pressure (sys/dia)</label>
+          <div class="bp-inputs">
+            <input type="number" id="bp-systolic" placeholder="120">
+            <span>/</span>
+            <input type="number" id="bp-diastolic" placeholder="80">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="heart-rate">Heart Rate (bpm)</label>
+          <input type="number" id="heart-rate" placeholder="72">
+        </div>
+        <div class="form-group">
+          <label for="weight">Weight (lbs)</label>
+          <input type="number" id="weight" placeholder="150" step="0.1">
+        </div>
+        <div class="form-group">
+          <label for="temperature">Temperature (°F)</label>
+          <input type="number" id="temperature" placeholder="98.6" step="0.1">
+        </div>
+      </div>
+
+      <!-- Mood fields -->
+      <div id="mood-fields" class="type-fields hidden">
+        <div class="form-group">
+          <label>Mood</label>
+          <div class="mood-picker">
+            <button type="button" class="mood-btn" data-mood="1">😞</button>
+            <button type="button" class="mood-btn" data-mood="2">😟</button>
+            <button type="button" class="mood-btn active" data-mood="3">😐</button>
+            <button type="button" class="mood-btn" data-mood="4">🙂</button>
+            <button type="button" class="mood-btn" data-mood="5">😄</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Energy</label>
+          <div class="mood-picker">
+            <button type="button" class="energy-btn" data-energy="1">⚡1</button>
+            <button type="button" class="energy-btn" data-energy="2">⚡2</button>
+            <button type="button" class="energy-btn active" data-energy="3">⚡3</button>
+            <button type="button" class="energy-btn" data-energy="4">⚡4</button>
+            <button type="button" class="energy-btn" data-energy="5">⚡5</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Note fields -->
+      <div id="note-fields" class="type-fields hidden">
+        <div class="form-group">
+          <label for="note-title">Title</label>
+          <input type="text" id="note-title" placeholder="Quick note title">
+        </div>
+        <div class="form-group">
+          <label for="note-body">Note</label>
+          <textarea id="note-body" rows="4" placeholder="Write your note..."></textarea>
+        </div>
+      </div>
+
+      <!-- Common fields -->
+      <div class="form-group">
+        <label for="entry-tags">Tags (comma-separated)</label>
+        <input type="text" id="entry-tags" placeholder="e.g., morning, exercise">
+      </div>
+      <div class="form-group">
+        <label for="entry-notes">Notes</label>
+        <textarea id="entry-notes" rows="2" placeholder="Additional notes..."></textarea>
+      </div>
+
+      <button type="submit" class="save-btn">Save Entry</button>
+    </form>
+  </div>
+
+  <!-- Entry Log View -->
+  <div id="log" class="view">
+    <div class="log-header">
+      <h2>Entry Log</h2>
+      <button id="export-btn" class="export-btn">Export CSV</button>
+    </div>
+    <div class="filters">
+      <select id="filter-type">
+        <option value="all">All Types</option>
+        <option value="symptom">🤒 Symptom</option>
+        <option value="medication">💊 Medication</option>
+        <option value="vitals">❤️ Vitals</option>
+        <option value="mood">😊 Mood</option>
+        <option value="note">📝 Note</option>
+      </select>
+      <input type="date" id="filter-from" placeholder="From">
+      <input type="date" id="filter-to" placeholder="To">
+      <input type="text" id="filter-search" placeholder="Search...">
+    </div>
+    <div id="entries-list" class="entries-list">
+      <p class="empty">No entries yet. Start tracking your health!</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
