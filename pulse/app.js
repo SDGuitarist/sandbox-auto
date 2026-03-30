@@ -3,7 +3,7 @@
 // ── Configuration ──────────────────────────────────────────────────
 // These will be set after deployment — placeholder values for now
 const CONFIG = {
-  API_URL: 'https://RAILWAY_URL_HERE',  // Will be updated after Railway deploy
+  API_URL: 'https://sandbox-auto-production.up.railway.app',
   SUPABASE_URL: 'https://qwrqcfajrnjedclfvzrl.supabase.co',
   SUPABASE_ANON_KEY: 'sb_publishable_kgVplccU6NREqyFg89Vi5g_j_GgIRcK',
 };
