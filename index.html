@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Today I Learned</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #c9a96e, #e8d5b7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      color: #888;
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+    }
+    .input-area {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: 1px solid #333;
+      border-radius: 8px;
+      background: #16213e;
+      color: #e0e0e0;
+      font-size: 1rem;
+    }
+    input:focus { outline: none; border-color: #c9a96e; }
+    button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      background: #c9a96e;
+      color: #1a1a2e;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover { background: #e8d5b7; }
+    .entries {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .entry {
+      background: #16213e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .entry-text { flex: 1; line-height: 1.5; }
+    .entry-date { color: #666; font-size: 0.8rem; white-space: nowrap; }
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #666;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0;
+      line-height: 1;
+    }
+    .delete-btn:hover { color: #e74c3c; }
+    .empty {
+      text-align: center;
+      color: #555;
+      padding: 3rem;
+      font-style: italic;
+    }
+    .count {
+      color: #555;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      width: 100%;
+      max-width: 600px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Today I Learned</h1>
+  <p class="subtitle">A micro-journal for daily discoveries</p>
+
+  <div class="input-area">
+    <input type="text" id="til-input" placeholder="What did you learn today?" />
+    <button onclick="addEntry()">Add</button>
+  </div>
+
+  <p class="count" id="count"></p>
+  <div class="entries" id="entries"></div>
+
+  <script>
+    function getEntries() {
+      return JSON.parse(localStorage.getItem('til-entries') || '[]');
+    }
+
+    function saveEntries(entries) {
+      localStorage.setItem('til-entries', JSON.stringify(entries));
+    }
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric'
+      });
+    }
+
+    function render() {
+      const entries = getEntries();
+      const container = document.getElementById('entries');
+      const count = document.getElementById('count');
+
+      count.textContent = entries.length
+        ? `${entries.length} thing${entries.length === 1 ? '' : 's'} learned`
+        : '';
+
+      if (entries.length === 0) {
+        container.innerHTML = '<p class="empty">Nothing yet. Learn something and write it down.</p>';
+        return;
+      }
+
+      container.innerHTML = entries.map((e, i) => `
+        <div class="entry">
+          <div>
+            <div class="entry-text">${escapeHtml(e.text)}</div>
+            <div class="entry-date">${formatDate(e.date)}</div>
+          </div>
+          <button class="delete-btn" onclick="deleteEntry(${i})" title="Delete">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function addEntry() {
+      const input = document.getElementById('til-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const entries = getEntries();
+      entries.unshift({ text, date: new Date().toISOString() });
+      saveEntries(entries);
+      input.value = '';
+      render();
+    }
+
+    document.getElementById('til-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addEntry();
+    });
+
+    render();
+  </script>
+</body>
+</html>
